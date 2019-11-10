@@ -1,4 +1,4 @@
-import { MidiControl, MidiControlCallback } from "./MidiControl";
+import { MidiControl, MidiControlCallback } from "@controls/midiControl";
 
 export class Button extends MidiControl {
     constructor(status: number, midiNo: number, callback: ButtonCallback) {

@@ -1,4 +1,4 @@
-import { Button, ButtonCallback } from "./Button";
+import { Button, ButtonCallback } from "@controls/button";
 
 export class LedButton extends Button {
     constructor(status: number, midiNo: number, callback: ButtonCallback) {

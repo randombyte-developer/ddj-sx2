@@ -11,7 +11,8 @@
     "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {
-      "@/*": [ "./src/*" ]
+      "@/*": [ "./src/*" ],
+      "@controls/*": [ "./src/controls/*" ],
     },
     "esModuleInterop": true,
     "experimentalDecorators": true,

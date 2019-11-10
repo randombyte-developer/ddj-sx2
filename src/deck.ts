@@ -1,6 +1,5 @@
-import { MidiControl } from "./controls/MidiControl";
-import { LedButton } from "./controls/LedButton";
-import { DeckLedButton } from "./controls/DeckLedButton";
+import { MidiControl } from "@controls/midiControl";
+import { DeckLedButton } from "@controls/deckLedButton";
 
 export class Deck {
 

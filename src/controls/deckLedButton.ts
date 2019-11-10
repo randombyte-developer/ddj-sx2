@@ -1,5 +1,5 @@
-import { ButtonCallback } from "./Button";
-import { LedButton } from "./LedButton";
+import { ButtonCallback } from "@controls/button";
+import { LedButton } from "@controls/ledButton";
 
 export class DeckLedButton extends LedButton {
     constructor(channel: number, midiNo: number, callback: ButtonCallback) {
