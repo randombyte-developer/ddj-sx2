@@ -1,3 +1,3 @@
-export function log(msg: string) {
-    engine.log(`DDJ-SX2-LOG: ${msg}`);
+export function log(msg: any) {
+    engine.log(`AADDJ-SX2-LOG: ${msg}`);
 }

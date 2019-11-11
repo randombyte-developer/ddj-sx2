@@ -1,7 +1,9 @@
 import { MidiControl } from "@controls/midiControl";
 import { DeckMidiControl } from "@controls/deckMidiControl";
+import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckLedButton } from "@controls/deckLedButton";
 import { Button } from "@controls/button";
+import { log } from "@/utils";
 
 export class Deck {
 
@@ -22,14 +24,14 @@ export class Deck {
                     this.activate("beatsync");
                 }
             }),
-            new DeckMidiControl(Deck.potiBase, channel, 0x13, {
+            new DeckFineMidiControl(Deck.potiBase, channel, 0x13, 0x33, {
                 onValueChanged: value => {
-                    this.setParameter("volume", value / 0xFF);
+                    this.setParameter("volume", value);
                 }
             }),
-            new DeckMidiControl(Deck.potiBase, channel, 0x00, {
+            new DeckFineMidiControl(Deck.potiBase, channel, 0x00, 0x20, {
                 onValueChanged: value => {
-                    this.setParameter("rate", value / 0xFF);
+                    this.setParameter("rate", 1 - value);
                 }
             })
         ];

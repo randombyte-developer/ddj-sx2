@@ -14,13 +14,11 @@ export function init(): void {
 const decks = [1, 2, 3, 4].map(channel => new Deck(channel));
 
 export function midiInput(channel: number, midiNo: number, value: number, status: number, group: string): void {
-    log(`Input{status: ${status}, midiNo: ${midiNo}}`);
+    //log(`Input{status: ${status}, midiNo: ${midiNo}}`);
 
     for (const deck of decks) {
         for (const control of deck.controls) {
-            if (status === control.status && midiNo === control.midiNo) {
-                control.offerValue(value);
-            }
+            control.offerValue(status, midiNo, value);
         }
     }
 }

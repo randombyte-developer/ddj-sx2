@@ -4,11 +4,11 @@ export class MidiControl {
 
     constructor(readonly status: number, readonly midiNo: number, protected readonly callback: MidiControlCallback) {}
 
-    public offerValue(value: number) {
-        if (this.lastValue !== value) {
-            if (this.callback.onValueChanged) this.callback.onValueChanged(value);
-            this.lastValue = value;
-        }
+    public offerValue(status: number, midiNo: number, value: number) {
+        if (status !== this.status || midiNo !== this.midiNo || this.lastValue === value) return;
+
+        if (this.callback.onValueChanged) this.callback.onValueChanged(value);
+        this.lastValue = value;
     }
 }
 
