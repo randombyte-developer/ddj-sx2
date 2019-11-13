@@ -90,6 +90,7 @@ export class Deck {
             })
         ];
 
+
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("beatsync", 0x58);
         this.makeLedConnection("pfl", 0x54);

@@ -11,6 +11,7 @@ export function init(): void {
         midi.sendSysexMsg(seratoHeartbeat, seratoHeartbeat.length);
     }, false);
 
+    createControls();
     registerConnectionCallbacks();
 }
 
@@ -26,15 +27,37 @@ const controls = [
         onPressed: () => {
             toggleControl("[Master]", "headSplit");
         }
-    }),
+    })
 ];
+
+function createControls() {
+    // Effects
+    for (const effectUnit of [1, 2]) {
+        for (const effectNumber of [1, 2, 3]) {
+            const group = `[EffectRack1_EffectUnit${effectUnit}_Effect${effectNumber}]`;
+
+            controls.push(new FineMidiControl(0xB3 + effectUnit, 0x00 + (effectNumber * 2), 0x20 + (effectNumber * 2), {
+                onValueChanged: value => {
+                    engine.setParameter(group, "meta", value);
+                }
+            }));
+            controls.push(new Button(0x93 + effectUnit, 0x46 + effectNumber, {
+                onPressed: () => {
+                    toggleControl(group, "enabled");
+                }
+            }));
+
+            makeLedConnection(group, "enabled", 0x93 + effectUnit, 0x46 + effectNumber);
+        }
+    }
+}
 
 function registerConnectionCallbacks() {
     makeLedConnection("[Master]", "headSplit", 0x96, 0x63);
 }
 
 export function midiInput(channel: number, midiNo: number, value: number, status: number, group: string): void {
-    //log(`Input{status: ${status.toString(16)}, midiNo: ${midiNo.toString(16)}}`);
+    log(`Input{status: ${status.toString(16)}, midiNo: ${midiNo.toString(16)}}`);
 
     for (const deck of decks) {
         for (const control of deck.controls) {
