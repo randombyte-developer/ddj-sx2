@@ -8,7 +8,6 @@ import { FineMidiControl } from "./controls/fineMidiControl";
 
 export class Deck {
 
-    private static buttonBase = 0x90;
     private static potiBase = 0xB0;
 
     private readonly group: string;
@@ -18,19 +17,34 @@ export class Deck {
         this.group = `[Channel${channel}]`;
 
         this.controls = [
-            new DeckLedButton(Deck.buttonBase, channel, 0x0B, {
+            new DeckLedButton(channel, 0x0B, {
                 onPressed: () => {
                     this.toggleControl("play");
                 }
             }),
-            new DeckButton(Deck.buttonBase, channel, 0x58, {
+            new DeckButton(channel, 0x58, {
                 onPressed: () => {
                     this.activate("beatsync");
                 }
             }),
-            new DeckButton(Deck.buttonBase, channel, 0x54, {
+            new DeckButton(channel, 0x54, {
                 onPressed: () => {
                     this.toggleControl("pfl");
+                }
+            }),
+            new DeckButton(channel, 0x16, {
+                onPressed: () => {
+                    this.setValue("orientation", 0);
+                }
+            }),
+            new DeckButton(channel, 0x1D, {
+                onPressed: () => {
+                    this.setValue("orientation", 1);
+                }
+            }),
+            new DeckButton(channel, 0x18, {
+                onPressed: () => {
+                    this.setValue("orientation", 2);
                 }
             }),
 
@@ -72,6 +86,6 @@ export class Deck {
     }
 
     private makeLedConnection(key: string, midiLedNo: number) {
-        makeLedConnection(this.group, key, Deck.buttonBase + this.channel - 1, midiLedNo);
+        makeLedConnection(this.group, key, DeckButton.BUTTON_BASE + this.channel - 1, midiLedNo);
     }
 }

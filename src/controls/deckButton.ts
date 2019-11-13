@@ -1,7 +1,9 @@
 import { Button, ButtonCallback } from "@controls/button";
 
 export class DeckButton extends Button {
-    constructor(baseStatus: number, channel: number, midiNo: number, callback: ButtonCallback) {
-        super(baseStatus + channel - 1, midiNo, callback);
+    public static readonly BUTTON_BASE = 0x90;
+
+    constructor(channel: number, midiNo: number, callback: ButtonCallback) {
+        super(DeckButton.BUTTON_BASE + channel - 1, midiNo, callback);
     }
 }
