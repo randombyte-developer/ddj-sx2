@@ -2,28 +2,38 @@ import { MidiControl } from "@controls/midiControl";
 import { DeckMidiControl } from "@controls/deckMidiControl";
 import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckLedButton } from "@controls/deckLedButton";
-import { Button } from "@controls/button";
-import { log } from "@/utils";
+import { DeckButton } from "@controls/deckButton";
+import { log, toggleControl, makeLedConnection } from "@/utils";
+import { FineMidiControl } from "./controls/fineMidiControl";
 
 export class Deck {
 
     private static buttonBase = 0x90;
     private static potiBase = 0xB0;
 
+    private readonly group: string;
     public readonly controls: MidiControl[];
 
     constructor(readonly channel: number) {
+        this.group = `[Channel${channel}]`;
+
         this.controls = [
             new DeckLedButton(Deck.buttonBase, channel, 0x0B, {
                 onPressed: () => {
                     this.toggleControl("play");
                 }
             }),
-            new DeckLedButton(Deck.buttonBase, channel, 0x58, {
+            new DeckButton(Deck.buttonBase, channel, 0x58, {
                 onPressed: () => {
                     this.activate("beatsync");
                 }
             }),
+            new DeckButton(Deck.buttonBase, channel, 0x54, {
+                onPressed: () => {
+                    this.toggleControl("pfl");
+                }
+            }),
+
             new DeckFineMidiControl(Deck.potiBase, channel, 0x13, 0x33, {
                 onValueChanged: value => {
                     this.setParameter("volume", value);
@@ -35,18 +45,22 @@ export class Deck {
                 }
             })
         ];
+
+        this.makeLedConnection("play", 0x0B);
+        this.makeLedConnection("beatsync", 0x58);
+        this.makeLedConnection("pfl", 0x54);
     }
 
     private setParameter(key: string, value: number) {
-        engine.setParameter(`[Channel${this.channel}]`, key, value);
+        engine.setParameter(this.group, key, value);
     }
 
     private getValue(key: string): number {
-        return engine.getValue(`[Channel${this.channel}]`, key);
+        return engine.getValue(this.group, key);
     }
 
     private setValue(key: string, value: number) {
-        engine.setValue(`[Channel${this.channel}]`, key, value);
+        engine.setValue(this.group, key, value);
     }
 
     private activate(key: string) {
@@ -54,6 +68,10 @@ export class Deck {
     }
 
     private toggleControl(key: string) {
-        this.setValue(key, !(this.getValue(key) as any as boolean) as any as number);
+        toggleControl(this.group, key);
+    }
+
+    private makeLedConnection(key: string, midiLedNo: number) {
+        makeLedConnection(this.group, key, Deck.buttonBase + this.channel - 1, midiLedNo);
     }
 }

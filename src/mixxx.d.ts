@@ -5,6 +5,11 @@ interface Engine {
     setParameter(group: string, key: string, value: number): void
     getValue(group: string, key: string): number
     setValue(group: string, key: string, value: number): void
+    makeConnection(group: string, key: string, callback: ConnectionCallback): void
+}
+
+interface ConnectionCallback {
+    (value: number, group: string, key: string): void
 }
 
 declare const engine: Engine
