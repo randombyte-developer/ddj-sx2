@@ -34,7 +34,7 @@ function registerConnectionCallbacks() {
 }
 
 export function midiInput(channel: number, midiNo: number, value: number, status: number, group: string): void {
-    //log(`Input{status: ${status}, midiNo: ${midiNo}}`);
+    //log(`Input{status: ${status.toString(16)}, midiNo: ${midiNo.toString(16)}}`);
 
     for (const deck of decks) {
         for (const control of deck.controls) {
