@@ -1,7 +1,7 @@
 import { Button } from "@controls/button";
 import { Deck } from "@/deck";
 import { FineMidiControl } from "@controls/fineMidiControl";
-import { log, toggleControl, makeLedConnection } from "@/utils";
+import { log, toggleControl, activate, makeLedConnection } from "@/utils";
 import { MidiControl } from "./controls/midiControl";
 
 const seratoHeartbeat = [0xF0, 0x00, 0x20, 0x7F, 0x50, 0x01, 0xF7];
@@ -10,7 +10,7 @@ const decks = [1, 2, 3, 4].map(channel => new Deck(channel));
 let deckIndependentControls: MidiControl[];
 
 export function init(): void {
-    
+
     deckIndependentControls = [
         new FineMidiControl(0xB6, 0x1F, 0x3F, {
             onValueChanged: value => {
@@ -21,7 +21,28 @@ export function init(): void {
             onPressed: () => {
                 toggleControl("[Master]", "headSplit");
             }
-        })
+        }),
+        new Button(0x96, 0x41, {
+            onPressed: () => {
+                activate("[Library]", "MoveFocusForward");
+            }
+        }),
+        new Button(0x96, 0x65, {
+            onPressed: () => {
+                activate("[Library]", "MoveLeft");
+            }
+        }),
+        new Button(0x96, 0x67, {
+            onPressed: () => {
+                activate("[Library]", "MoveRight");
+            }
+        }),
+        new MidiControl(0xB6, 0x40, {
+            onNewValue: value => {
+                if (value > 0x3F) value = value - 0x80;
+                engine.setValue("[Library]", "MoveVertical", value);
+            }
+        }),
     ];
 
     // Effects

@@ -2,8 +2,9 @@ import { MidiControl } from "@controls/midiControl";
 import { DeckMidiControl } from "@controls/deckMidiControl";
 import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckLedButton } from "@controls/deckLedButton";
+import { LedButton } from "@controls/ledButton";
 import { DeckButton } from "@controls/deckButton";
-import { log, toggleControl, makeLedConnection } from "@/utils";
+import { log, toggleControl, activate, makeLedConnection } from "@/utils";
 import { FineMidiControl } from "@/controls/fineMidiControl";
 import { Button } from "@/controls/button";
 
@@ -18,12 +19,12 @@ export class Deck {
         this.group = `[Channel${channel}]`;
 
         this.controls = [
-            new DeckLedButton(channel, 0x0B, {
+            new DeckButton(channel, 0x0B, {
                 onPressed: () => {
                     this.toggleControl("play");
                 }
             }),
-            new DeckButton(channel, 0x58, {
+            new DeckLedButton(channel, 0x58, {
                 onPressed: () => {
                     this.activate("beatsync");
                 }
@@ -92,12 +93,17 @@ export class Deck {
                 onValueChanged: value => {
                     this.setParameter("rate", 1 - value);
                 }
+            }),
+
+            new LedButton(0x96, 0x45 + channel, {
+                onPressed: () => {
+                    this.activate("LoadSelectedTrack");
+                }
             })
         ];
 
 
         this.makeLedConnection("play", 0x0B);
-        this.makeLedConnection("beatsync", 0x58);
         this.makeLedConnection("pfl", 0x54);
     }
 
@@ -114,7 +120,7 @@ export class Deck {
     }
 
     private activate(key: string) {
-        this.setValue(key, 1);
+        activate(this.group, key);
     }
 
     private toggleControl(key: string) {

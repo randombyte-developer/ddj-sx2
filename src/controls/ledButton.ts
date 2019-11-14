@@ -2,13 +2,15 @@ import { Button, ButtonCallback } from "@controls/button";
 
 export class LedButton extends Button {
     constructor(status: number, midiNo: number, callback: ButtonCallback) {
-        super(status, midiNo, callback);
+        super(status, midiNo, {
+            onPressed: () => {
+                if (callback.onPressed) callback.onPressed();
+                midi.sendShortMsg(status, midiNo, 0x7F);
+            },
+            onReleased: () => {
+                if (callback.onReleased) callback.onReleased();
+                midi.sendShortMsg(status, midiNo, 0x00);
+            }
+        });
     }
-
-    public led(activate: boolean) {
-        midi.sendShortMsg(this.status, this.midiNo, activate ? 0xFF : 0x00);
-    }
-
-    public ledOn() { this.led(true); }
-    public ledOff() { this.led(false); }
 }
