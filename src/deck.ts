@@ -78,6 +78,11 @@ export class Deck {
                 }
             }),
 
+            new DeckFineMidiControl(Deck.potiBase, channel, 0x04, 0x24, {
+                onValueChanged: value => {
+                    this.setParameter("pregain", value);
+                }
+            }),
             new DeckFineMidiControl(Deck.potiBase, channel, 0x13, 0x33, {
                 onValueChanged: value => {
                     this.setParameter("volume", value);

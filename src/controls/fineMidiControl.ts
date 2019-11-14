@@ -15,7 +15,7 @@ export class FineMidiControl extends MidiControl {
 
         if (midiNo === this.midiNoMsb) {
             // tslint:disable-next-line: no-bitwise
-            const fullValue = ((value << 7) + this.lastValueLsb) / 2 ** 14;
+            const fullValue = ((value << 7) + this.lastValueLsb) / 0x3FFF;
 
             if (this.callback.onValueChanged) this.callback.onValueChanged(fullValue);
 
@@ -23,7 +23,7 @@ export class FineMidiControl extends MidiControl {
             this.lastValueMsb = value;
         } else if (midiNo === this.midiNoLsb) {
             // tslint:disable-next-line: no-bitwise
-            const fullValue = ((this.lastValueMsb << 7) + value) / 2 ** 14;
+            const fullValue = ((this.lastValueMsb << 7) + value) / 0x3FFF;
 
             if (this.callback.onValueChanged) this.callback.onValueChanged(fullValue);
 

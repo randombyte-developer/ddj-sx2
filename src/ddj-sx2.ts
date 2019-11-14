@@ -10,11 +10,7 @@ const decks = [1, 2, 3, 4].map(channel => new Deck(channel));
 let deckIndependentControls: MidiControl[];
 
 export function init(): void {
-    // serato heartbeat to keep some additional functionality like jog wheel touch events
-    engine.beginTimer(250, function() {
-        midi.sendSysexMsg(seratoHeartbeat, seratoHeartbeat.length);
-    }, false);
-
+    
     deckIndependentControls = [
         new FineMidiControl(0xB6, 0x1F, 0x3F, {
             onValueChanged: value => {
@@ -52,7 +48,7 @@ export function init(): void {
 }
 
 export function midiInput(channel: number, midiNo: number, value: number, status: number, group: string): void {
-    log(`Input{status: ${status.toString(16)}, midiNo: ${midiNo.toString(16)}}`);
+    log(`Input{status: ${status.toString(16)}, midiNo: ${midiNo.toString(16)}, value: ${value.toString(16)}}`);
 
     for (const deck of decks) {
         for (const control of deck.controls) {
