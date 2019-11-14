@@ -99,12 +99,18 @@ export class Deck {
                 onPressed: () => {
                     this.activate("LoadSelectedTrack");
                 }
+            }),
+            new DeckButton(channel, 0x1A, {
+                onPressed: () => {
+                    this.toggleControl("quantize");
+                }
             })
         ];
 
 
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);
+        this.makeLedConnection("quantize", 0x1A);
     }
 
     private setParameter(key: string, value: number) {
