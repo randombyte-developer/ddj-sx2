@@ -3,7 +3,7 @@ export function log(msg: any) {
 }
 
 export function toggleControl(channel: string, key: string) {
-    engine.setValue(channel, key, !(engine.getValue(channel, key) as any as boolean) as any as number); // todo: casting
+    engine.setValue(channel, key, !engine.getValue(channel, key));
 }
 
 export function activate(channel: string, key: string) {

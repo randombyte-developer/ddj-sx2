@@ -51,6 +51,23 @@ export class Deck {
                 }
             }),
 
+            // Loops
+            new DeckButton(channel, 0x14, {
+                onPressed: () => {
+                    this.activate(`beatloop_${this.getValue("beatloop_size")}_toggle`);
+                }
+            }),
+            new DeckLedButton(channel, 0x12, {
+                onPressed: () => {
+                    this.activate("loop_halve");
+                }
+            }),
+            new DeckLedButton(channel, 0x13, {
+                onPressed: () => {
+                    this.activate("loop_double");
+                }
+            }),
+
             // Jog wheel
             new DeckButton(channel, 0x36, {
                 onPressed: () => {
@@ -138,17 +155,18 @@ export class Deck {
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);
         this.makeLedConnection("quantize", 0x1A);
+        this.makeLedConnection("loop_enabled", 0x14);
     }
 
     private setParameter(key: string, value: number) {
         engine.setParameter(this.group, key, value);
     }
 
-    private getValue(key: string): number {
+    private getValue(key: string): number | boolean {
         return engine.getValue(this.group, key);
     }
 
-    private setValue(key: string, value: number) {
+    private setValue(key: string, value: number | boolean) {
         engine.setValue(this.group, key, value);
     }
 

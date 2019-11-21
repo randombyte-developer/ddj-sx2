@@ -6,7 +6,7 @@ interface Engine {
 
     getParameter(group: string, key: string): number
     setParameter(group: string, key: string, value: number): void
-    getValue(group: string, key: string): number
+    getValue(group: string, key: string): number | boolean
     setValue(group: string, key: string, value: number | boolean): void
 
     makeConnection(group: string, key: string, callback: ConnectionCallback): void
