@@ -1,11 +1,20 @@
 interface Engine {
     log(msg: string): void
+
     beginTimer(millis: number, func: () => void, oneShot: boolean): number
+    stopTimer(timerId: number): void
+
     getParameter(group: string, key: string): number
     setParameter(group: string, key: string, value: number): void
     getValue(group: string, key: string): number
     setValue(group: string, key: string, value: number | boolean): void
+
     makeConnection(group: string, key: string, callback: ConnectionCallback): void
+
+    scratchEnable(deck: number, intervalsPerRev: number, rpm: number, alpha: number, beta: number, ramp: boolean): void
+    scratchTick(deck: number, interval: number): void
+    scratchDisable(deck: number, ramp: boolean): void
+    isScratching(deck: number): boolean
 }
 
 interface ConnectionCallback {

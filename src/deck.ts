@@ -11,6 +11,7 @@ import { Button } from "@/controls/button";
 export class Deck {
 
     private static potiBase = 0xB0;
+    private static jogWheelCenter = 0x40;
 
     public readonly controls: MidiControl[];
     private readonly group: string;
@@ -47,6 +48,32 @@ export class Deck {
             new DeckButton(channel, 0x18, {
                 onPressed: () => {
                     this.setValue("orientation", 2);
+                }
+            }),
+
+            // Jog wheel
+            new DeckButton(channel, 0x36, {
+                onPressed: () => {
+                    const alpha = 1.0 / 8;
+                    const beta = alpha / 32;
+                    engine.scratchEnable(channel, 1024, 33 + 1 / 3, alpha, beta, true);
+                },
+                onReleased: () => {
+                    engine.scratchDisable(channel, true);
+                }
+            }),
+            new DeckMidiControl(channel, Deck.potiBase, 0x22, {
+                onNewValue: value => {
+                    engine.scratchTick(channel, value - Deck.jogWheelCenter);
+                }
+            }),
+            new DeckMidiControl(channel, Deck.potiBase, 0x21, {
+                onNewValue: value => {
+                    if (engine.isScratching(channel)) {
+                        engine.scratchTick(channel, value - Deck.jogWheelCenter);
+                    } else {
+                        this.setParameter("jog", (value - Deck.jogWheelCenter) / 10.0);
+                    }
                 }
             }),
 
