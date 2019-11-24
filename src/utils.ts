@@ -2,6 +2,10 @@ export function log(msg: any) {
     engine.log(`AADDJ-SX2-LOG: ${msg}`);
 }
 
+export function clamp(value: number, min: number, max: number): number {
+    return value <= min ? min : value >= max ? max : value;
+}
+
 export function toggleControl(channel: string, key: string) {
     engine.setValue(channel, key, !engine.getValue(channel, key));
 }

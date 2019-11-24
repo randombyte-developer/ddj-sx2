@@ -4,7 +4,7 @@ import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckLedButton } from "@controls/deckLedButton";
 import { LedButton } from "@controls/ledButton";
 import { DeckButton } from "@controls/deckButton";
-import { log, toggleControl, activate, makeLedConnection } from "@/utils";
+import { log, toggleControl, activate, makeLedConnection, clamp } from "@/utils";
 import { FineMidiControl } from "@/controls/fineMidiControl";
 import { Button } from "@/controls/button";
 
@@ -13,10 +13,12 @@ export class Deck {
     private static potiBase = 0xB0;
     private static jogWheelCenter = 0x40;
 
+    private static padOffset = 0x07;
     private static padShiftOffset = 0x08;
 
     private static hotcueGreen = 0x1A;
     private static hotcueDeleteRed = 0x28;
+    private static beatjumpOrange = 0x27;
 
     public readonly controls: MidiControl[];
     private readonly connections: Connection[] = [];
@@ -154,14 +156,36 @@ export class Deck {
                 onPressed: () => {
                     this.toggleControl("quantize");
                 }
+            }),
+
+            // Beatjump
+            new DeckButton(channel + Deck.padOffset, 0x06, {
+                onPressed: () => {
+                    this.activate("beatjump_backward");
+                }
+            }),
+            new DeckButton(channel + Deck.padOffset, 0x07, {
+                onPressed: () => {
+                    this.activate("beatjump_forward");
+                }
+            }),
+            new DeckLedButton(channel, 0x24, {
+                onPressed: () => {
+                    this.modifyAndClampBeatjumpSize(0.5);
+                }
+            }),
+            new DeckLedButton(channel, 0x2C, {
+                onPressed: () => {
+                  this.modifyAndClampBeatjumpSize(2);
+                }
             })
         ];
 
         // Hotcues
         for (let hotcueIndex = 0; hotcueIndex < 4; hotcueIndex++) {
             const hotcueNumber = hotcueIndex + 1;
-            const padStatus = channel + 0x07;
-            const padLedStatus = channel + 0x06;
+            const padStatus = channel + Deck.padOffset;
+            const padLedStatus = padStatus - 1;
             const padLedStatusWithBase = padLedStatus + DeckButton.BUTTON_BASE;
             const padMidiNo = 0x00 + hotcueIndex;
             const shiftedpadMidiNo = padMidiNo + Deck.padShiftOffset;
@@ -209,7 +233,21 @@ export class Deck {
      * Initializes only some Leds, others like hotcue pads are somewhere else.
      */
     private initLeds() {
+        // hotcue master pad
         midi.sendShortMsg(DeckButton.BUTTON_BASE + this.channel - 1, 0x1B, Deck.hotcueGreen);
+
+        const padLedStatusWithBase = DeckButton.BUTTON_BASE + this.channel - 1 + Deck.padOffset;
+
+        // beatjump pads
+        for (let padIndex = 6; padIndex < 8; padIndex++) {
+            midi.sendShortMsg(padLedStatusWithBase, 0x00 + padIndex, Deck.beatjumpOrange);
+            midi.sendShortMsg(padLedStatusWithBase, 0x00 + padIndex + Deck.padShiftOffset, Deck.beatjumpOrange);
+            midi.sendShortMsg(padLedStatusWithBase, 0x00 + padIndex + Deck.padShiftOffset, 0x00);
+        }
+    }
+
+    private modifyAndClampBeatjumpSize(factor: number) {
+        this.setValue("beatjump_size", clamp(this.getValue("beatjump_size") as number * factor, 0.03125, 128));
     }
 
     private setParameter(key: string, value: number) {
