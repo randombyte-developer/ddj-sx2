@@ -13,7 +13,13 @@ export class Deck {
     private static potiBase = 0xB0;
     private static jogWheelCenter = 0x40;
 
+    private static padShiftOffset = 0x08;
+
+    private static hotcueGreen = 0x1A;
+    private static hotcueDeleteRed = 0x28;
+
     public readonly controls: MidiControl[];
+    private readonly connections: Connection[] = [];
     private readonly group: string;
 
     constructor(readonly channel: number) {
@@ -151,11 +157,59 @@ export class Deck {
             })
         ];
 
+        // Hotcues
+        for (let hotcueIndex = 0; hotcueIndex < 4; hotcueIndex++) {
+            const hotcueNumber = hotcueIndex + 1;
+            const padStatus = channel + 0x07;
+            const padLedStatus = channel + 0x06;
+            const padLedStatusWithBase = padLedStatus + DeckButton.BUTTON_BASE;
+            const padMidiNo = 0x00 + hotcueIndex;
+            const shiftedpadMidiNo = padMidiNo + Deck.padShiftOffset;
+
+            this.controls.push(new DeckButton(padStatus, padMidiNo, {
+                onValueChanged: pressed => {
+                    this.setValue(`hotcue_${hotcueNumber}_activate`, pressed);
+                }
+            }));
+            this.controls.push(new DeckButton(padStatus, shiftedpadMidiNo, {
+                onPressed: () => {
+                    this.activate(`hotcue_${hotcueNumber}_clear`);
+                }
+            }));
+
+            this.makeConnection(`hotcue_${hotcueNumber}_enabled`, enabled => {
+                midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.hotcueGreen * enabled);
+                midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, Deck.hotcueDeleteRed * enabled);
+            });
+
+            // set to dimmed green by setting to green and then immediately setting to "dimmed-off"
+            midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.hotcueGreen);
+            midi.sendShortMsg(padLedStatusWithBase, padMidiNo, 0x00);
+            // same for the delete mode
+            midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, Deck.hotcueDeleteRed);
+            midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, 0x00);
+        }
 
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);
         this.makeLedConnection("quantize", 0x1A);
         this.makeLedConnection("loop_enabled", 0x14);
+
+        this.triggerConnections();
+        this.initLeds();
+    }
+
+    private triggerConnections() {
+        for (const connection of this.connections) {
+            connection.trigger();
+        }
+    }
+
+    /**
+     * Initializes only some Leds, others like hotcue pads are somewhere else.
+     */
+    private initLeds() {
+        midi.sendShortMsg(DeckButton.BUTTON_BASE + this.channel - 1, 0x1B, Deck.hotcueGreen);
     }
 
     private setParameter(key: string, value: number) {
@@ -178,7 +232,11 @@ export class Deck {
         toggleControl(this.group, key);
     }
 
+    private makeConnection(key: string, callback: ConnectionCallback) {
+        this.connections.push(engine.makeConnection(this.group, key, callback));
+    }
+
     private makeLedConnection(key: string, midiLedNo: number) {
-        makeLedConnection(this.group, key, DeckButton.BUTTON_BASE + this.channel - 1, midiLedNo);
+        this.connections.push(makeLedConnection(this.group, key, DeckButton.BUTTON_BASE + this.channel - 1, midiLedNo));
     }
 }

@@ -9,7 +9,7 @@ interface Engine {
     getValue(group: string, key: string): number | boolean
     setValue(group: string, key: string, value: number | boolean): void
 
-    makeConnection(group: string, key: string, callback: ConnectionCallback): void
+    makeConnection(group: string, key: string, callback: ConnectionCallback): Connection
 
     scratchEnable(deck: number, intervalsPerRev: number, rpm: number, alpha: number, beta: number, ramp: boolean): void
     scratchTick(deck: number, interval: number): void
@@ -19,6 +19,10 @@ interface Engine {
 
 interface ConnectionCallback {
     (value: number, group: string, key: string): void
+}
+
+interface Connection {
+    trigger(): void
 }
 
 declare const engine: Engine

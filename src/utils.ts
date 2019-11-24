@@ -10,8 +10,8 @@ export function activate(channel: string, key: string) {
     engine.setValue(channel, key, 1);
 }
 
-export function makeLedConnection(channel: string, key: string, midiLedStatus: number, midiLedNo: number) {
-    engine.makeConnection(channel, key, value => {
+export function makeLedConnection(channel: string, key: string, midiLedStatus: number, midiLedNo: number): Connection {
+    return engine.makeConnection(channel, key, value => {
         midi.sendShortMsg(midiLedStatus, midiLedNo, value * 0x7F);
     });
 }
