@@ -19,6 +19,8 @@ export class Deck {
     private static hotcueGreen = 0x1A;
     private static hotcueDeleteRed = 0x28;
     private static beatjumpOrange = 0x27;
+    private static instantFilterEffectOrange = 0x27;
+    private static eqKillBlue = 0x08;
 
     public readonly controls: MidiControl[];
     private readonly connections: Connection[] = [];
@@ -26,6 +28,13 @@ export class Deck {
 
     constructor(readonly channel: number) {
         this.group = `[Channel${channel}]`;
+
+        const padStatus = channel + Deck.padOffset;
+        const padLedStatus = padStatus - 1;
+        const padLedStatusWithBase = padLedStatus + DeckButton.BUTTON_BASE;
+
+        const eqGroup = `[EqualizerRack1_${this.group}_Effect1]`;
+        const filterEffectGroup = `[QuickEffectRack1_${this.group}]`;
 
         this.controls = [
             new DeckButton(channel, 0x0B, {
@@ -105,29 +114,24 @@ export class Deck {
             // EQ
             new DeckFineMidiControl(channel, Deck.potiBase, 0x0F, 0x2F, {
                 onValueChanged: value => {
-                    engine.setParameter(`[EqualizerRack1_${this.group}_Effect1]`, "parameter1", value);
+                    engine.setParameter(eqGroup, "parameter1", value);
                 }
             }),
             new DeckFineMidiControl(channel, Deck.potiBase, 0x0B, 0x2B, {
                 onValueChanged: value => {
-                    engine.setParameter(`[EqualizerRack1_${this.group}_Effect1]`, "parameter2", value);
+                    engine.setParameter(eqGroup, "parameter2", value);
                 }
             }),
             new DeckFineMidiControl(channel, Deck.potiBase, 0x07, 0x27, {
                 onValueChanged: value => {
-                    engine.setParameter(`[EqualizerRack1_${this.group}_Effect1]`, "parameter3", value);
+                    engine.setParameter(eqGroup, "parameter3", value);
                 }
             }),
 
             // Quick Effect / Filter
             new FineMidiControl(0xB6, 0x16 + channel, 0x36 + channel, {
                 onValueChanged: value => {
-                    engine.setParameter(`[QuickEffectRack1_${this.group}]`, "super1", value);
-                }
-            }),
-            new Button(0x96, 0x73 + channel, {
-                onValueChanged: value => {
-                    engine.setValue(`[QuickEffectRack1_${this.group}]`, "enabled", value > 0);
+                    engine.setParameter(filterEffectGroup, "super1", value);
                 }
             }),
 
@@ -184,9 +188,6 @@ export class Deck {
         // Hotcues
         for (let hotcueIndex = 0; hotcueIndex < 4; hotcueIndex++) {
             const hotcueNumber = hotcueIndex + 1;
-            const padStatus = channel + Deck.padOffset;
-            const padLedStatus = padStatus - 1;
-            const padLedStatusWithBase = padLedStatus + DeckButton.BUTTON_BASE;
             const padMidiNo = 0x00 + hotcueIndex;
             const shiftedpadMidiNo = padMidiNo + Deck.padShiftOffset;
 
@@ -206,21 +207,43 @@ export class Deck {
                 midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, Deck.hotcueDeleteRed * enabled);
             });
 
-            // set to dimmed green by setting to green and then immediately setting to "dimmed-off"
             midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.hotcueGreen);
-            midi.sendShortMsg(padLedStatusWithBase, padMidiNo, 0x00);
-            // same for the delete mode
             midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, Deck.hotcueDeleteRed);
-            midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, 0x00);
         }
+
+        // EQ-Kill
+        for (let i = 0; i < 3; i++) {
+            const buttonParameter = `button_parameter${i + 1}`;
+            const padMidiNo = 0x10 + i;
+            this.controls.push(new DeckButton(padStatus, padMidiNo, {
+                onValueChanged: pressed => {
+                    engine.setValue(eqGroup, buttonParameter, pressed);
+                }
+            }));
+            this.connections.push(engine.makeConnection(eqGroup, buttonParameter, enabled => {
+                midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.eqKillBlue * +!enabled); // +boolean -> number
+            }));
+
+            midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.eqKillBlue);
+        }
+
+        // Instant Filer
+        this.controls.push(new DeckButton(padStatus, 0x13, {
+            onValueChanged: pressed => {
+                pressed = pressed ? 1 : 0;
+                engine.setParameter(filterEffectGroup, "super1", 0.5 - pressed / 4);
+                midi.sendShortMsg(padLedStatusWithBase, 0x13, Deck.instantFilterEffectOrange * +!pressed);
+            }
+        }));
+        midi.sendShortMsg(padLedStatusWithBase, 0x13, Deck.instantFilterEffectOrange);
 
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);
         this.makeLedConnection("quantize", 0x1A);
         this.makeLedConnection("loop_enabled", 0x14);
 
-        this.triggerConnections();
         this.initLeds();
+        this.triggerConnections();
     }
 
     private triggerConnections() {
