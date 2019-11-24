@@ -85,32 +85,6 @@ export class Deck {
                 }
             }),
 
-            // Jog wheel
-            new DeckButton(channel, 0x36, {
-                onPressed: () => {
-                    const alpha = 1.0 / 8;
-                    const beta = alpha / 32;
-                    engine.scratchEnable(channel, 1024, 33 + 1 / 3, alpha, beta, true);
-                },
-                onReleased: () => {
-                    engine.scratchDisable(channel, true);
-                }
-            }),
-            new DeckMidiControl(channel, Deck.potiBase, 0x22, {
-                onNewValue: value => {
-                    engine.scratchTick(channel, value - Deck.jogWheelCenter);
-                }
-            }),
-            new DeckMidiControl(channel, Deck.potiBase, 0x21, {
-                onNewValue: value => {
-                    if (engine.isScratching(channel)) {
-                        engine.scratchTick(channel, value - Deck.jogWheelCenter);
-                    } else {
-                        this.setParameter("jog", (value - Deck.jogWheelCenter) / 10.0);
-                    }
-                }
-            }),
-
             // EQ
             new DeckFineMidiControl(channel, Deck.potiBase, 0x0F, 0x2F, {
                 onValueChanged: value => {
@@ -185,6 +159,41 @@ export class Deck {
             })
         ];
 
+        // Jog wheel
+        const jogWheelConfiguration = {
+            touch: [0x36, 0x67],
+            scratch: [0x22, 0x1F],
+            bend: [0x21, 0x26],
+            factor: [1, 20]
+        };
+
+        for (let i = 0; i < 2; i++) {
+            this.controls.push(new DeckButton(channel, jogWheelConfiguration.touch[i], {
+                onPressed: () => {
+                    const alpha = 1.0 / 8;
+                    const beta = alpha / 32;
+                    engine.scratchEnable(channel, 1024, 33 + 1 / 3, alpha, beta, true);
+                },
+                onReleased: () => {
+                    engine.scratchDisable(channel, true);
+                }
+            }));
+            this.controls.push(new DeckMidiControl(channel, Deck.potiBase, jogWheelConfiguration.scratch[i], {
+                onNewValue: value => {
+                    engine.scratchTick(channel, (value - Deck.jogWheelCenter) * jogWheelConfiguration.factor[i]);
+                }
+            }));
+            this.controls.push(new DeckMidiControl(channel, Deck.potiBase, jogWheelConfiguration.bend[i], {
+                onNewValue: value => {
+                    if (engine.isScratching(channel)) {
+                        engine.scratchTick(channel, value - Deck.jogWheelCenter);
+                    } else {
+                        this.setParameter("jog", (value - Deck.jogWheelCenter) / 10.0);
+                    }
+                }
+            }));
+        }
+
         // Hotcues
         for (let hotcueIndex = 0; hotcueIndex < 4; hotcueIndex++) {
             const hotcueNumber = hotcueIndex + 1;
@@ -227,7 +236,7 @@ export class Deck {
             midi.sendShortMsg(padLedStatusWithBase, padMidiNo, Deck.eqKillBlue);
         }
 
-        // Instant Filer
+        // Instant Filter
         this.controls.push(new DeckButton(padStatus, 0x13, {
             onValueChanged: pressed => {
                 pressed = pressed ? 1 : 0;
