@@ -29,8 +29,13 @@ export class Deck {
     private readonly connections: Connection[] = [];
     private readonly group: string;
 
+    private readonly rateControl: DeckFineMidiControl;
+    private readonly deckStatus: number;
+
     constructor(readonly channel: number) {
         this.group = `[Channel${channel}]`;
+
+        this.deckStatus = DeckButton.BUTTON_BASE + this.channel - 1;
 
         const padStatus = channel + Deck.padOffset;
         const padLedStatus = padStatus - 1;
@@ -53,6 +58,7 @@ export class Deck {
             new DeckLedButton(channel, 0x58, {
                 onPressed: () => {
                     this.activate("beatsync");
+                    this.updateRateTakeoverLeds();
                 }
             }),
             new DeckButton(channel, 0x54, {
@@ -127,11 +133,6 @@ export class Deck {
                     this.setParameter("volume", value);
                 }
             }),
-            new DeckFineMidiControl(Deck.potiBase, channel, 0x00, 0x20, {
-                onValueChanged: value => {
-                    this.setParameter("rate", 1 - value);
-                }
-            }),
 
             new LedButton(0x96, 0x45 + channel, {
                 onPressed: () => {
@@ -171,6 +172,16 @@ export class Deck {
                 }
             })
         ];
+
+        // Rate
+        this.rateControl = new DeckFineMidiControl(Deck.potiBase, channel, 0x00, 0x20, {
+            onValueChanged: value => {
+                const hardwareValue = 1 - value;
+                this.setParameter("rate", hardwareValue);
+                this.updateRateTakeoverLeds(hardwareValue);
+            }
+        });
+        this.controls.push(this.rateControl);
 
         // Jog wheel
         const jogWheelConfiguration = {
@@ -299,9 +310,9 @@ export class Deck {
      */
     private initLeds() {
         // hotcue master pad
-        midi.sendShortMsg(DeckButton.BUTTON_BASE + this.channel - 1, 0x1B, Deck.hotcueGreen);
+        midi.sendShortMsg(this.deckStatus, 0x1B, Deck.hotcueGreen);
 
-        const padLedStatusWithBase = DeckButton.BUTTON_BASE + this.channel - 1 + Deck.padOffset;
+        const padLedStatusWithBase = this.deckStatus + Deck.padOffset;
 
         // beatjump pads
         for (let padIndex = 6; padIndex < 8; padIndex++) {
@@ -313,6 +324,17 @@ export class Deck {
 
     private modifyAndClampBeatjumpSize(factor: number) {
         this.setValue("beatjump_size", clamp(this.getValue("beatjump_size") as number * factor, 0.03125, 128));
+    }
+
+    private updateRateTakeoverLeds(hardwareValue: number = 1 - this.rateControl.lastValue) {
+        const softwareValue = this.getParameter("rate");
+        log(`${hardwareValue} ${softwareValue}`)
+        midi.sendShortMsg(this.deckStatus, 0x37, +(hardwareValue < softwareValue));
+        midi.sendShortMsg(this.deckStatus, 0x34, +(hardwareValue > softwareValue));
+    }
+
+    private getParameter(key: string): number {
+        return engine.getParameter(this.group, key);
     }
 
     private setParameter(key: string, value: number) {
@@ -340,6 +362,6 @@ export class Deck {
     }
 
     private makeLedConnection(key: string, midiLedNo: number) {
-        this.connections.push(makeLedConnection(this.group, key, DeckButton.BUTTON_BASE + this.channel - 1, midiLedNo));
+        this.connections.push(makeLedConnection(this.group, key, this.deckStatus, midiLedNo));
     }
 }
