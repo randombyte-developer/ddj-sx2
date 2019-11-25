@@ -4,7 +4,7 @@ import { FineMidiControl } from "@controls/fineMidiControl";
 import { log, toggleControl, activate, makeLedConnection } from "@/utils";
 import { MidiControl } from "./controls/midiControl";
 
-const seratoHeartbeat = [0xF0, 0x00, 0x20, 0x7F, 0x50, 0x01, 0xF7];
+const requestControlsSysex = [0xF0, 0x00, 0x20, 0x7F, 0x03, 0x01, 0xF7];
 
 const decks = [1, 2, 3, 4].map(channel => new Deck(channel));
 let deckIndependentControls: MidiControl[];
@@ -66,6 +66,8 @@ export function init(): void {
     }
 
     makeLedConnection("[Master]", "headSplit", 0x96, 0x63);
+
+    midi.sendSysexMsg(requestControlsSysex, requestControlsSysex.length);
 }
 
 export function midiInput(channel: number, midiNo: number, value: number, status: number, group: string): void {
