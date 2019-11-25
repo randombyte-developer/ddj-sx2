@@ -15,6 +15,9 @@ interface Engine {
     scratchTick(deck: number, interval: number): void
     scratchDisable(deck: number, ramp: boolean): void
     isScratching(deck: number): boolean
+
+    softTakeover(group: string, key: string, enable: boolean): void
+    softTakeoverIgnoreNextValue(group: string, key: string): void
 }
 
 interface ConnectionCallback {

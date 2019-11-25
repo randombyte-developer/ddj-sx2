@@ -23,6 +23,8 @@ export class Deck {
     private static eqKillBlue = 0x08;
     private static beatlooprollPurple = 0x2E;
 
+    private static partnerDecks = [2, 1, 4, 3];
+
     public readonly controls: MidiControl[];
     private readonly connections: Connection[] = [];
     private readonly group: string;
@@ -267,6 +269,15 @@ export class Deck {
             midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple * +!enabled);
         });
         midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple);
+
+        // SoftTakeover
+        engine.softTakeover(this.group, "rate", true);
+        // softTakeoverIgnoreNextValue when switching away from a deck
+        this.controls.push(new DeckButton(channel, 0x72, {
+            onPressed: () => {
+                engine.softTakeoverIgnoreNextValue(`[Channel${Deck.partnerDecks[channel]}]`, "rate");
+            }
+        }));
 
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);

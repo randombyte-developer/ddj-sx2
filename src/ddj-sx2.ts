@@ -36,14 +36,19 @@ export function init(): void {
             onPressed: () => {
                 activate("[Library]", "MoveRight");
             }
-        }),
-        new MidiControl(0xB6, 0x40, {
+        })
+    ];
+
+    function traxControl(midiNo: number, factor: number): MidiControl {
+        return new MidiControl(0xB6, midiNo, {
             onNewValue: value => {
                 if (value > 0x3F) value = value - 0x80;
-                engine.setValue("[Library]", "MoveVertical", value);
+                engine.setValue("[Library]", "MoveVertical", value * factor);
             }
-        }),
-    ];
+        });
+    }
+    deckIndependentControls.push(traxControl(0x40, 1));
+    deckIndependentControls.push(traxControl(0x64, 5));
 
     // Effects
     for (const effectUnit of [1, 2]) {
