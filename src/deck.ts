@@ -32,10 +32,13 @@ export class Deck {
     private readonly rateControl: DeckFineMidiControl;
     private readonly deckStatus: number;
 
+    private readonly ejectMidiNo: number;
+
     constructor(readonly channel: number) {
         this.group = `[Channel${channel}]`;
 
         this.deckStatus = DeckButton.BUTTON_BASE + this.channel - 1;
+        this.ejectMidiNo = 0x57 + channel + (channel >= 3 ? 6 : 0); // 0x58, 0x59, 0x60, 0x61
 
         const padStatus = channel + Deck.padOffset;
         const padLedStatus = padStatus - 1;
@@ -134,16 +137,6 @@ export class Deck {
                 }
             }),
 
-            new LedButton(0x96, 0x45 + channel, {
-                onPressed: () => {
-                    this.activate("LoadSelectedTrack");
-                }
-            }),
-            new Button(0x96, 0x57 + channel + (channel >= 3 ? 6 : 0), { // 58, 59, 60, 61
-                onPressed: () => {
-                    if (!this.getValue("play")) this.activate("eject");
-                }
-            }),
             new DeckButton(channel, 0x1A, {
                 onPressed: () => {
                     this.toggleControl("quantize");
@@ -244,6 +237,28 @@ export class Deck {
             midi.sendShortMsg(padLedStatusWithBase, shiftedpadMidiNo, Deck.hotcueDeleteRed);
         }
 
+        // Load track
+        this.controls.push(new Button(0x96, 0x45 + channel, {
+            onPressed: () => {
+                this.activate("LoadSelectedTrack");
+            }/* ,
+            onReleased: () => {
+                engine.beginTimer(1, () => {
+                    midi.sendShortMsg(0x96, 0x45 + channel, 0x7F);  // Force load leds always on, the hardware turns them off after a press
+                }, true);
+            } */
+        }));
+        midi.sendShortMsg(0x96, 0x45 + channel, 0x7F); // Init load leds
+
+        // Eject track
+        this.controls.push(new Button(0x96, this.ejectMidiNo, {
+            onPressed: () => {
+                if (!this.getValue("play")) this.activate("eject");
+            }
+        }));
+        this.makeConnection("play", this.updateLoadTrackLed);
+        this.makeConnection("track_loaded", this.updateLoadTrackLed);
+
         // EQ-Kill
         for (let i = 0; i < 3; i++) {
             const buttonParameter = `button_parameter${i + 1}`;
@@ -331,6 +346,10 @@ export class Deck {
         log(`${hardwareValue} ${softwareValue}`)
         midi.sendShortMsg(this.deckStatus, 0x37, +(hardwareValue < softwareValue));
         midi.sendShortMsg(this.deckStatus, 0x34, +(hardwareValue > softwareValue));
+    }
+
+    private updateLoadTrackLed() {
+        midi.sendShortMsg(0x96, this.ejectMidiNo, +!this.getValue("play") * +this.getValue("track_loaded") * 0x7F);
     }
 
     private getParameter(key: string): number {
