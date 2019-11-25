@@ -34,6 +34,8 @@ export class Deck {
 
     private readonly ejectMidiNo: number;
 
+    private previousBeatloopSize: number = 8;
+
     constructor(readonly channel: number) {
         this.group = `[Channel${channel}]`;
 
@@ -241,12 +243,7 @@ export class Deck {
         this.controls.push(new Button(0x96, 0x45 + channel, {
             onPressed: () => {
                 this.activate("LoadSelectedTrack");
-            }/* ,
-            onReleased: () => {
-                engine.beginTimer(1, () => {
-                    midi.sendShortMsg(0x96, 0x45 + channel, 0x7F);  // Force load leds always on, the hardware turns them off after a press
-                }, true);
-            } */
+            }
         }));
         midi.sendShortMsg(0x96, 0x45 + channel, 0x7F); // Init load leds
 
@@ -287,12 +284,21 @@ export class Deck {
 
         // Beatlooproll
         this.controls.push(new DeckButton(channel + Deck.padOffset, 0x14, {
+            onPressed: () => {
+                this.previousBeatloopSize = +this.getValue("beatloop_size");
+            },
             onValueChanged: pressed => {
                 this.setValue("beatlooproll_0.5_activate", pressed);
             }
         }));
-        this.makeConnection("beatlooproll_activate", enabled => {
+        this.makeConnection("beatlooproll_0.5_activate", enabled => {
             midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple * +!enabled);
+            if (!enabled) {
+                engine.beginTimer(1, () => {
+                    log(this.previousBeatloopSize)
+                    this.setValue("beatloop_size", this.previousBeatloopSize);
+                }, true);
+            }
         });
         midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple);
 
