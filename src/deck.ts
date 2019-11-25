@@ -21,6 +21,7 @@ export class Deck {
     private static beatjumpOrange = 0x27;
     private static instantFilterEffectOrange = 0x27;
     private static eqKillBlue = 0x08;
+    private static beatlooprollPurple = 0x2E;
 
     public readonly controls: MidiControl[];
     private readonly connections: Connection[] = [];
@@ -245,6 +246,17 @@ export class Deck {
             }
         }));
         midi.sendShortMsg(padLedStatusWithBase, 0x13, Deck.instantFilterEffectOrange);
+
+        // Beatlooproll
+        this.controls.push(new DeckButton(channel + Deck.padOffset, 0x14, {
+            onValueChanged: pressed => {
+                this.setValue("beatlooproll_0.5_activate", pressed);
+            }
+        }));
+        this.makeConnection("beatlooproll_activate", enabled => {
+            midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple * +!enabled);
+        });
+        midi.sendShortMsg(padLedStatusWithBase, 0x14, Deck.beatlooprollPurple);
 
         this.makeLedConnection("play", 0x0B);
         this.makeLedConnection("pfl", 0x54);
