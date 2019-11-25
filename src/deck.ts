@@ -43,6 +43,11 @@ export class Deck {
                     this.toggleControl("play");
                 }
             }),
+            new DeckButton(channel, 0x48, {
+                onPressed: () => {
+                    this.activate("start");
+                }
+            }),
             new DeckLedButton(channel, 0x58, {
                 onPressed: () => {
                     this.activate("beatsync");
