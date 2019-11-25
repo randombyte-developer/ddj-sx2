@@ -136,6 +136,11 @@ export class Deck {
                     this.activate("LoadSelectedTrack");
                 }
             }),
+            new Button(0x96, 0x57 + channel + (channel >= 3 ? 6 : 0), { // 58, 59, 60, 61
+                onPressed: () => {
+                    if (!this.getValue("play")) this.activate("eject");
+                }
+            }),
             new DeckButton(channel, 0x1A, {
                 onPressed: () => {
                     this.toggleControl("quantize");
