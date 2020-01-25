@@ -19,7 +19,7 @@ export function init(): void {
         }),
         new Button(0x96, 0x63, {
             onPressed: () => {
-                toggleControl("[Master]", "headSplit");
+                //toggleControl("[Master]", "headSplit");
             }
         }),
         new Button(0x96, 0x41, {
@@ -70,7 +70,7 @@ export function init(): void {
         }
     }
 
-    makeLedConnection("[Master]", "headSplit", 0x96, 0x63);
+    //makeLedConnection("[Master]", "headSplit", 0x96, 0x63);
 
     midi.sendSysexMsg(requestControlsSysex, requestControlsSysex.length);
 }
