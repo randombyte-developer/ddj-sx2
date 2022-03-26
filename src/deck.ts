@@ -191,10 +191,10 @@ export class Deck {
                 onPressed: () => {
                     const alpha = 1.0 / 8;
                     const beta = alpha / 32;
-                    engine.scratchEnable(channel, 1024, 33 + 1 / 3, alpha, beta, true);
+                    engine.scratchEnable(channel, 1024, 33 + 1 / 3, alpha, beta, false);
                 },
                 onReleased: () => {
-                    engine.scratchDisable(channel, true);
+                    engine.scratchDisable(channel, false);
                 }
             }));
             this.controls.push(new DeckMidiControl(channel, Deck.potiBase, jogWheelConfiguration.scratch[i], {
